@@ -24,7 +24,7 @@ map_pt = {}
 
 def init():
     global map_mac,map_pt,IP
-    IP = util.get_ip('eth0')
+    IP = util.get_ip('wlan0')
     db = DB('test.db')
     map_mac = dict([(m_id,mac) for m_id,mac in db.query(['m_id','mac'],'map_mac')])
     map_pt = dict([(p_id,pt) for p_id,pt in db.query(['p_id','pt'],'map_pt')])

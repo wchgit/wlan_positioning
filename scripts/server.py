@@ -18,13 +18,13 @@ db = DB('train.db')
 
 def init():
     global map_mac,map_pt,IP
-    IP = util.get_ip('eth0')
+    IP = util.get_ip('wlan0')
     map_mac = dict([(mac,m_id) for mac,m_id in db.query(['mac','m_id'],'map_mac')])
     map_pt = dict([(p_id,pt) for p_id,pt in db.query(['p_id','pt'],'map_pt')])
 
 def transform(entry):
     dic = json.loads(entry)
-    return dict([(map_mac[mac],rss) for mac,rss in dic.items()])
+    return dict([(map_mac[mac],rss) for mac,rss in dic.items() if mac in map_mac])
 
 def receiver(r_queue):
     ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

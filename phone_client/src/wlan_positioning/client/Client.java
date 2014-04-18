@@ -68,9 +68,11 @@ class Wifi{
 class Sender extends Thread{
     String ip;
     Wifi wifi;
+    String device;
     public Sender(Wifi wifi, String ip){
 	this.ip = ip;
 	this.wifi = wifi;
+	device = android.os.Build.MODEL.trim().replace(' ','_');
     }
 
     public void run(){
@@ -84,6 +86,7 @@ class Sender extends Thread{
 	    else
 		entry+="}";
 	}
+	entry = device+'\t'+entry;
 	try{
 	    Socket s = new Socket(ip,5672);
 	    OutputStream os = s.getOutputStream();

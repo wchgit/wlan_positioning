@@ -114,6 +114,7 @@ class Sender extends Thread {
     String ip;
     Wifi wifi;
     Context context;
+    String device;
     int delay = 3000;
     int interval = 1000;
     int times = 5;
@@ -121,6 +122,7 @@ class Sender extends Thread {
 	this.ip = ip;
 	this.wifi = wifi;
 	this.context = context;
+	device = android.os.Build.MODEL.trim().replace(' ','_');
 	Task task = new Task(times);
 	new Timer().schedule(task, delay, interval);
     }
@@ -144,6 +146,7 @@ class Sender extends Thread {
 		else
 		    entry+="}";
 	    }
+	    entry = device+'\t'+entry;
 	    try{
 		Socket s = new Socket(ip,5672);
 		OutputStream os = s.getOutputStream();

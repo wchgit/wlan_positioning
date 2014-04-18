@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
 	    android:layout_weight="2"
             android:layout_margin="3dp"
-	    android:inputType = "phone"
+	    android:inputType = "text"
             android:hint="@string/ip"/>
     
         <Button

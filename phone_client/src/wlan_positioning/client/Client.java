@@ -2,6 +2,7 @@ package wlan_positioning.client;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.net.wifi.*;
@@ -33,6 +34,11 @@ public class Client extends Activity
 	v_show = (TextView)findViewById(R.id.show);
 	v_start = (Button)findViewById(R.id.start);
 	v_ip = (EditText)findViewById(R.id.ip);
+	SharedPreferences pref = getSharedPreferences("pref",0);
+	String ip = pref.getString("ip",null);
+	if(ip!=null){
+	    v_ip.setText(ip);
+	}
 
 	wifi.enable();
 	v_start.setOnClickListener(new View.OnClickListener(){
@@ -42,6 +48,15 @@ public class Client extends Activity
 	    });
 	new Receiver(handler, v_show).start();
 	
+    }
+
+    public void onDestroy(){
+	super.onDestroy();
+	SharedPreferences pref = getSharedPreferences("pref",0);
+	SharedPreferences.Editor editor = pref.edit();
+	editor.putString("ip",v_ip.getText().toString());
+	editor.commit();
+	System.exit(0);
     }
 }
 
@@ -68,9 +83,11 @@ class Wifi{
 class Sender extends Thread{
     String ip;
     Wifi wifi;
+    String device;
     public Sender(Wifi wifi, String ip){
 	this.ip = ip;
 	this.wifi = wifi;
+	device = android.os.Build.MODEL.trim().replace(' ','_');
     }
 
     public void run(){
@@ -84,6 +101,7 @@ class Sender extends Thread{
 	    else
 		entry+="}";
 	}
+	entry = device+'\t'+entry;
 	try{
 	    Socket s = new Socket(ip,5672);
 	    OutputStream os = s.getOutputStream();

@@ -37,9 +37,14 @@ def retransform(entry):
 
 def sender(result_queue):
     db = DB('test.db')
+    lst = db.queryall('sqlite_master','tbl_name="rss_%s"'%device)
+    if len(lst) == 0: #device unknown
+        print 'unknown device'
+        sys.exit()
     total,right = 0,0
     for p_id,entry in db.query(['p_id','entry'],'rss_'+device):
         entry = retransform(entry)
+        entry = device+'\t'+entry
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.connect((IP,PORT_SERVER))
         s.send(entry)

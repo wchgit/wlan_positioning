@@ -35,17 +35,16 @@ def receiver(r_queue):
         s,addr = ss.accept()
         ip = addr[0]
         entry = s.recv(BUFSIZ)
-        data = ip+'\t'+entry
+        device,entry = entry.split('\t')
         if r_queue.full():
             print 'error: r_queue is full'
             sys.exit()
-        r_queue.put(data)
+        r_queue.put((ip,device,entry))
         s.close()
 
 def sender(s_queue):
     while True:
-        data = s_queue.get()
-        ip,result = data.split('\t')
+        ip,result = s_queue.get()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((ip,PORT_CLIENT))
         s.send(result)
@@ -53,15 +52,13 @@ def sender(s_queue):
 
 def processor(r_queue, s_queue):
     while True:
-        data = r_queue.get()
-        ip,entry = data.split('\t')
+        ip,device,entry = r_queue.get()
         dic = transform(entry)
         #process data
         cls = predictor.predict(dic)
         result = map_pt[cls]
-        data = ip+'\t'+result
-        s_queue.put(data)
-        print 'from\t'+ip+'\t\tpredict\t'+result
+        s_queue.put((ip,result))
+        print ip+'\t'+device+'\t'+result
 
 
 if __name__ == '__main__':

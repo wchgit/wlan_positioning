@@ -82,11 +82,11 @@ public class Collector extends Activity implements View.OnClickListener, NumberP
     }
 
     public void onValueChange(NumberPicker picker, int oldVal, int newVal){
-	pt_slct.setText("pt"+newVal);
+	pt_slct.setText("selected: pt"+newVal);
     }
 
     public void onClick(View v){
-	final String pid = "selected: pt"+np.getValue();
+	final String pid = "pt"+np.getValue();
 	cnt = 0;
 	bar.setProgress(cnt);
 

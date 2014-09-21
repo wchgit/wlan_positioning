@@ -5,75 +5,148 @@ import socket
 import sys
 import predictor
 import json
+from datetime import *
+import logging
+import time
+from myuser import *
+import building as bd
 import util
-from dbhelper import DB
 
 PORT_LOCAL = 5672
 PORT_CLIENT = 5674
-BUFSIZ = 4096
-IP = ""
-map_mac = {}
-map_pt = {}
-db = DB('train.db')
+PORT_GUI = 5676
+#IP = util.get_ip('wlan0')
+IP = '127.0.0.1'
 
-def init():
-    global map_mac,map_pt,IP
-    IP = util.get_ip('wlan0')
-    map_mac = dict([(mac,m_id) for mac,m_id in db.query(['mac','m_id'],'map_mac')])
-    map_pt = dict([(p_id,pt) for p_id,pt in db.query(['p_id','pt'],'map_pt')])
+r_queue = Queue.Queue(100)
+s_queue = Queue.Queue(100)
+gui_queue = Queue.Queue(100)
+umgr = user_manager()
 
-def transform(entry):
-    dic = json.loads(entry)
-    return dict([(map_mac[mac],rss) for mac,rss in dic.items() if mac in map_mac])
+def processor():
+    last = None
+    while True:
+        ip,uid,step_seq,timestamp,entry = r_queue.get()
+        entry = bd.transform(entry)
+        proba = predictor.predict(entry)
+        pid = proba.index(max(proba))
+        coord = bd.get_coordinate(pid)
+        pt = bd.get_pointname(pid)
 
+        usr = umgr.get_user(uid)
+        usr.update(step_seq,timestamp,pid)
+
+        s_queue.put((ip,pt))
+        gui_queue.put(usr)
+        print ip+'\t'+pt
+
+def gui_sender():
+    while True:
+        usr = gui_queue.get()
+        info = usr.get_info()
+        if info == None:
+            continue
+        info = json.dumps(info)
+        address = ('127.0.0.1', PORT_GUI)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.sendto(info, address)
+        s.close()
+
+def sender(): #udp
+    while True:
+        ip,result = s_queue.get()
+        address = (ip, PORT_CLIENT)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.sendto(result, address)
+        s.close()
+
+def receiver(): #udp
+    BUFSIZ = 4096
+    ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  
+    ss.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+    ss.bind((IP,PORT_LOCAL))
+    while True:
+        print '-'*20+'>'*20
+        entry, addr = ss.recvfrom(BUFSIZ)
+        ip = addr[0]
+        uid,step_seq,entry,timestamp = entry.split('\t')
+        step_seq = [str(i) for i in json.loads(step_seq)]
+        if r_queue.full():
+            logging.error('damn it! r_queue is full!!!')
+            sys.exit()
+        r_queue.put((ip,uid,step_seq,float(timestamp)/1000,entry))
+
+def test():
+    rootpath = os.getenv('WLAN_ROOT')
+    datapath = join(rootpath,'raw_data')
+    dbpath = join(datapath,'DB')
+
+    start = time.time()
+    for line in open('test1.log'):
+        time.sleep(1)
+        uid,step_seq,entry,timestamp = line.strip().split('\t')
+        timestamp = float(timestamp)
+        address = (IP, PORT_LOCAL)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.sendto(line.strip(), address)
+        s.close()
+
+def start():
+    logging.basicConfig(filename='log',format='%(levelno)d %(asctime)s\t%(message)s',level=logging.DEBUG)
+
+    thread_lst = []
+    thread_lst.append(threading.Thread(target=receiver,name='rcv',args=()))
+    thread_lst.append(threading.Thread(target=sender,name='snd',args=()))
+    thread_lst.append(threading.Thread(target=gui_sender,name='guisnd',args=()))
+    thread_lst.append(threading.Thread(target=processor,name='pcs',args=()))
+
+    for thread in thread_lst:
+        thread.start()
+    
+    print '==service started=='
+    print 'ip:',IP
+    
+    #threading.Thread(target=test,name='test',args=()).start()
+
+if __name__ == '__main__':
+    start()
+
+#---------------------->>>>>>>>>>>>>>>>>>>>TCP SENDER
+'''
+def sender(s_queue):
+    while True:
+        ip,result = s_queue.get()
+        address = (ip, PORT_CLIENT)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect(address)
+            s.send(result)
+        except Exception as e:
+            logging.error('damn it! network ungeilivable!!!')
+            s.close()
+            continue
+        s.close()
+'''
+
+#---------------------->>>>>>>>>>>>>>>>>>>>TCP RECEIVER
+'''
 def receiver(r_queue):
     ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ss.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
     ss.bind((IP,PORT_LOCAL))
-    ss.listen(5)
+    ss.listen(1)
     while True:
         s,addr = ss.accept()
-        ip = addr[0]
         entry = s.recv(BUFSIZ)
-        device,entry = entry.split('\t')
+        ip = addr[0]
+        print entry
+        print time.time()
+        s.close()
+
+        device,step_seq,entry,timestamp = entry.split('\t')
+        step_seq = [str(i) for i in json.loads(step_seq)]
         if r_queue.full():
-            print 'error: r_queue is full'
+            logging.error('damn it! r_queue is full!!!')
             sys.exit()
-        r_queue.put((ip,device,entry))
-        s.close()
-
-def sender(s_queue):
-    while True:
-        ip,result = s_queue.get()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((ip,PORT_CLIENT))
-        s.send(result)
-        s.close()
-
-def processor(r_queue, s_queue):
-    while True:
-        ip,device,entry = r_queue.get()
-        dic = transform(entry)
-        #process data
-        cls = predictor.predict(dic)
-        result = map_pt[cls]
-        s_queue.put((ip,result))
-        print ip+'\t'+device+'\t'+result
-
-
-if __name__ == '__main__':
-    init()
-    r_queue = Queue.Queue(100)
-    s_queue = Queue.Queue(100)
-
-    thread_rcv = threading.Thread(target=receiver,name='rcv',args=(r_queue,))
-    thread_snd = threading.Thread(target=sender,name='snd',args=(s_queue,))
-    thread_pcs = threading.Thread(target=processor,name='pcs',args=(r_queue,s_queue))
-
-    thread_rcv.start()
-    thread_snd.start()
-    thread_pcs.start()
-    
-    print '==service started=='
-    print 'ip:',IP
-
+        r_queue.put((ip,device,step_seq,entry))
+'''

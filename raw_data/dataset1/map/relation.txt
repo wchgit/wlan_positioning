@@ -1,0 +1,7 @@
+pt0	pt1	56	S
+pt1	pt2	79	W
+pt2	pt3	67	W
+pt3	pt4	81	W
+pt4	pt5	102	W
+pt5	pt6	87	W
+pt6	pt7	107	W

@@ -1,61 +1,58 @@
-##INTRODUCTION##
-This is a solution for wlan positioning. It is proposed on the basis of machine learning algorithm and therefore composed of two seperate phases: offline and online. This solution is based on client-server mode.
+##Dependence##
++ numpy
++ scipy
++ sklearn
++ pygame
 
-Offline phase would process raw data, split the whole dataset into training set(70%) and testing set(30%), and eventually yeild a training model according to records from training set, using certain algorithm.
+##Introduction##
+This is a wlan positioning solution framework.
+It is proposed on the basis of machine learning and therefore composed of two phases: 
++ offline phase
+  1. process raw data
+  2. train model
++ online phase
+  1. launch positioning server
+  2. predict user's position
+This frameword is implemented as client-server mode.
 
-Online phase would launch a positioning server after some initialization, the server would wait for request and call predict algorithm to return a result.
+##Usage##
+1. data
+first of all, make a new directory and put your offline-phase data into 'raw_data/[your_dataset]'
+put recieved signal strength(RSS) files into 'raw_data/[your_dataset]/rss'
+put map infomations into 'raw_data/[your_dataset]/map'
+and put test data into 'raw_data/[your_dataset]/test'
 
-Apart from offline and online phase, we supply an extra testing phase for users to examine both efficiency and accuracy of certain algorithm.
-_________________________________________________________________
-
-##HOW TO USE##
-+ offline phase: 
+2. run framework
+    ```bash
+    ./go.py -d [dataset] -a [alg]
+    ./go.py -d [dataset] -a [alg] env
+    ./go.py -d [dataset] -a [alg] offline
+    ./go.py -d [dataset] -a [alg] online
     ```
-    ./offline.sh <device_dataset> <algorithm>. 
+    + options:
+      + -d: specify your dataset in raw_data
+      + -a: specify your machine learning algorithm in alg
+    + arguments:
+      + env: build an environment for further operation
+      + offline: execute offline operation, should execute env first
+      + online: execute online operation, should execute env and offline first
+      + test: should be used seperately
+      + nothing specified: will execute env, offline and online sequentially
+
+3. run PC client
+    ```bash
+    ./pc_client.py
     ```
-    >example: ./offline.sh htc NN
 
-+ online phase: 
-    ```
-    ./online
-    ```
+4. run phone client
+   use app in phone_client
 
-+ testing phase: 
-    ```
-    ./test.py <device_dataset>
-    ```
-    >example: ./test.py htc
+5. useful tools
+   + rss collector
+     in phone_collector directory
+   + map information collector
+     in offline_tool directory
 
-    ```
-    ./gen_test.py <device_dataset> 
-    ```
-    >will randomly generate testing dataset from specified device_dataset
-
-_________________________________________________________________
-
-##DEPENDENCY##
-scikit-learn is required  
-currently only available on linux(will migrate to windows soon)
-_________________________________________________________________
-
-##MANIFEST##
-+ online.sh
-+ offline.sh
-+ raw_data: measured data categried by device are available here
-+ alg: all algorithms available for training and predicting
-+ scripts: some necessary scripts, including the positioning server
-+ test: scripts for test are available here
-
-_________________________________________________________________
-
-##BUG REPORT LIST##
+##BUG REPORT##
 + zchgeek@gmail.com
 + wchgeek@gmail.com
-
-_________________________________________________________________
-
-##WANTED##
-Call for contributors.  
-This is a newly founded project. It's not 'what happened', but 'what's happening'.  
-Any advice or contribution are urgently wanted.
-

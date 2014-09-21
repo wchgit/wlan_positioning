@@ -9,17 +9,41 @@
     android:paddingRight="16dp"
     android:paddingTop="16dp"
     tools:context=".Main" >
-    
-    <TextView 
-        android:id="@+id/show"
-        android:layout_margin="10dp"
-        android:layout_centerInParent="true"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:text="@string/show"
-        android:maxLines="15"
-        android:scrollbars="vertical"
-        android:fadeScrollbars="true"/>
+
+    <ScrollView
+	android:id="@+id/sv"
+	android:layout_width="fill_parent"
+	android:layout_height="200dp"
+	android:fadeScrollbars="true"
+	android:fadingEdge="none">
+        <TextView 
+            android:id="@+id/show"
+            android:layout_margin="10dp"
+            android:layout_centerInParent="true"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/show"
+	    android:textSize = "30dp"
+            android:scrollbars="vertical"
+            android:fadeScrollbars="true"/>
+    </ScrollView>
+
+    <TextView
+	android:id="@+id/acc"
+	android:layout_margin="10dp"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_below="@id/sv"
+	android:textSize = "30dp"
+	android:text="acc"/>
+    <TextView
+	android:id="@+id/orien"
+	android:layout_margin="10dp"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_below="@id/acc"
+	android:textSize = "30dp"
+	android:text="orien"/>
 
     <LinearLayout
 	android:layout_width="match_parent"

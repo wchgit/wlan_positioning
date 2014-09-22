@@ -1,7 +1,7 @@
 *~
 *.pyc
 *.db
-data
+env
 phone_collector/bin/*
 phone_client/bin/*
 test/phone_test/bin/*
